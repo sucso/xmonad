@@ -118,7 +118,7 @@ myKeyBindings c =
       , ("M-f", addName "Spawn web browser"              $ spawn =<< io myBrowser)
       , ("M-e", addName "Spawn an emacs clients"         $ spawn "emacsclient -c -a \"\"")
       , ("M-<Return>", addName "Spawn a terminal"        $ spawn =<< io myTerminal)
-      , ("<Print>", addName "Spawn a screenshot utility" $ spawn "flameshot gui")
+      , ("<Print>", addName "Spawn a screenshot utility" $ unGrab *> spawn "flameshot gui")
       ]
 
       ^++^ subKeys "Switch workspace"
