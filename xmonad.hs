@@ -25,7 +25,6 @@ import qualified XMonad.StackSet as W
 import XMonad.Util.ClickableWorkspaces
 import XMonad.Util.EZConfig (mkKeymap, mkNamedKeymap)
 import XMonad.Util.NamedActions (NamedAction, addName, addDescrKeys', subtitle, xMessage, (^++^))
-import XMonad.Util.Run (runProcessWithInput)
 import XMonad.Util.Ungrab (unGrab)
 import qualified XMonad.Util.Hacks as Hacks
 
@@ -36,7 +35,6 @@ import qualified Data.Map as M
 
 import System.Environment (lookupEnv)
 import System.Exit (exitSuccess)
-import System.IO.Unsafe (unsafePerformIO)
 
 import XResources
 
@@ -85,6 +83,10 @@ myManageHook = composeAll
   , insertPosition End Newer
   ]
 
+mySwallowClasses = [ "st-256color"
+                   , "xterm"
+                   ]
+
 {- *******************************
               KEYBINDINGS
    ******************************* -}
@@ -96,29 +98,29 @@ showKeyBindings = xMessage
 myBrowser  = fromMaybe "librewolf"       <$> lookupEnv "BROWSER"
 myLauncher = fromMaybe "rofi -show drun" <$> lookupEnv "LAUNCHER"
 myTerminal = fromMaybe (terminal def)    <$> lookupEnv "TERMINAL"
-myXmobarToggle = "dbus-send \
-  \ --session \
-  \ --dest=org.Xmobar.Control \
-  \ --type=method_call \
-  \ --print-reply '/org/Xmobar/Control' \
-  \ org.Xmobar.Control.SendSignal 'string:Toggle 0'"
+myToggleXMobar = "dbus-send \
+                 \ --session \
+                 \ --dest=org.Xmobar.Control \
+                 \ --type=method_call \
+                 \ --print-reply '/org/Xmobar/Control' \
+                 \ org.Xmobar.Control.SendSignal 'string:Toggle 0'"
 
 myKeyBindings :: XConfig l0 -> [((KeyMask, KeySym), NamedAction)]
 myKeyBindings c =
   let subKeys str ks = subtitle str : mkNamedKeymap c ks in
       subKeys "XMonad Core"
-      [ ("M-b", addName "Toggle hide/show bar"                    $ spawn myXmobarToggle) -- sendMessage ToggleStruts
+      [ ("M-b",   addName "Toggle hide/show bar"                  $ spawn myToggleXMobar) -- sendMessage ToggleStruts
       , ("M-S-q", addName "Quit XMonad"                           $ io exitSuccess)
       , ("M-S-c", addName "Kill focused window"                   $ kill1)
       , ("M-S-a", addName "Kill all windows in current workspace" $ killAll)
       ]
 
       ^++^ subKeys "Launch applications"
-      [ ("M-d", addName "Spawn application launcher"     $ spawn =<< io myLauncher)
-      , ("M-f", addName "Spawn web browser"              $ spawn =<< io myBrowser)
-      , ("M-e", addName "Spawn an emacs clients"         $ spawn "emacsclient -c -a \"\"")
-      , ("M-<Return>", addName "Spawn a terminal"        $ spawn =<< io myTerminal)
-      , ("<Print>", addName "Spawn a screenshot utility" $ unGrab *> spawn "flameshot gui")
+      [ ("M-d",        addName "Spawn application launcher" $ spawn =<< io myLauncher)
+      , ("M-e",        addName "Spawn Emacs client"         $ spawn "emacsclient -c -a \"\"")
+      , ("M-f",        addName "Spawn web browser"          $ spawn =<< io myBrowser)
+      , ("M-<Return>", addName "Spawn terminal"             $ spawn =<< io myTerminal)
+      , ("<Print>",    addName "Spawn screenshot utility"   $ unGrab *> spawn "flameshot gui")
       ]
 
       ^++^ subKeys "Switch workspace"
@@ -156,9 +158,6 @@ myMouseBindings (XConfig { XMonad.modMask = myModMask}) = M.fromList
     , ((myModMask, button2), \w -> focus w >> withFocused (windows . W.sink) >> windows W.shiftMaster)
     , ((myModMask, button3), \w -> focus w >> Flex.mouseResizeWindow w >> windows W.shiftMaster)
     ]
-    where floatOrNot f n = withFocused $ \windowId -> do
-            floats <- gets (W.floating . windowset)
-            if windowId `M.member` floats then f else n
 
 {- *******************************
                 MAIN
@@ -222,7 +221,7 @@ main = do
       , terminal = terminal
       , handleEventHook = handleEventHook def
         <> Hacks.windowedFullscreenFixEventHook
-        <> swallowEventHook (foldl1 (<||>) $ map (className =?) [ "st-256color", "xterm" ]) (return True)
+        <> swallowEventHook (foldl1 (<||>) $ map (className =?) mySwallowClasses) (return True)
       , layoutHook = myLayoutHook
       , logHook = dynamicLogWithPP myPrettyPrinter
       , manageHook = myManageHook
