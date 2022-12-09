@@ -1,4 +1,5 @@
 import XMonad hiding (defaultConfig)
+import XMonad.Core (screenRect, windowset)
 
 import XMonad.Actions.CopyWindow (kill1)
 import XMonad.Actions.Promote
@@ -9,6 +10,7 @@ import qualified XMonad.Actions.FlexibleResize as Flex
 import XMonad.Hooks.EwmhDesktops (ewmh)
 import XMonad.Hooks.InsertPosition
 import XMonad.Hooks.ManageDocks (avoidStruts, docks, manageDocks, ToggleStruts(..))
+import XMonad.Hooks.ManageHelpers (doCenterFloat)
 import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
 import XMonad.Hooks.WindowSwallowing (swallowEventHook)
@@ -24,7 +26,8 @@ import qualified XMonad.StackSet as W
 
 import XMonad.Util.ClickableWorkspaces
 import XMonad.Util.EZConfig (mkKeymap, mkNamedKeymap)
-import XMonad.Util.NamedActions (NamedAction, addName, addDescrKeys', subtitle, xMessage, (^++^))
+import XMonad.Util.NamedActions (NamedAction, addName, addDescrKeys', subtitle, showKm, (^++^))
+import XMonad.Util.Run (spawnPipe)
 import XMonad.Util.Ungrab (unGrab)
 import qualified XMonad.Util.Hacks as Hacks
 
@@ -35,6 +38,7 @@ import qualified Data.Map as M
 
 import System.Environment (lookupEnv)
 import System.Exit (exitSuccess)
+import System.IO (hClose, hPutStr, hPutStrLn)
 
 import XResources
 
@@ -77,9 +81,10 @@ myLayoutHook = avoidStruts
   myLayouts
 
 myManageHook = composeAll
-  [ manageDocks
-    -- NOTE: if having issues with floating windows, check:
-    --       https://www.reddit.com/r/xmonad/comments/pv2e6e/comment/he78xqa
+  -- NOTE: if having issues with floating windows, check:
+  --       https://www.reddit.com/r/xmonad/comments/pv2e6e/comment/he78xqa
+  [ className =? "Yad" --> doCenterFloat
+  , manageDocks
   , insertPosition End Newer
   ]
 
@@ -92,7 +97,6 @@ mySwallowClasses = [ "st-256color"
    ******************************* -}
 
 myModMask = mod4Mask
-showKeyBindings = xMessage
 
 -- Applications
 myBrowser  = fromMaybe "librewolf"       <$> lookupEnv "BROWSER"
@@ -104,6 +108,23 @@ myToggleXMobar = "dbus-send \
                  \ --type=method_call \
                  \ --print-reply '/org/Xmobar/Control' \
                  \ org.Xmobar.Control.SendSignal 'string:Toggle 0'"
+
+
+showKeyBindings :: [((KeyMask, KeySym), NamedAction)] -> NamedAction
+showKeyBindings keymap = addName "Show keybindings" $ do
+  rect <- gets (screenRect . W.screenDetail . W.current . windowset)
+  let width  = rect_width  rect `div` 2
+      height = rect_height rect `div` 2
+  handle <- spawnPipe $ "yad \
+                        \ --text-info \
+                        \ --fore=" ++ base00 ++ " \
+                        \ --back=" ++ base05 ++ " \
+                        \ --center \
+                        \ --geometry=" ++ show width ++ "x" ++ show height ++ " \
+                        \ --title 'XMonad keybindings'"
+  io $ hPutStr handle (unlines $ showKm keymap)
+  io $ hClose handle
+  return ()
 
 myKeyBindings :: XConfig l0 -> [((KeyMask, KeySym), NamedAction)]
 myKeyBindings c =
