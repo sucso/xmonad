@@ -149,6 +149,21 @@ myKeyBindings c =
       , ("M-<Space>", addName "Promote window to master"              $ promote)
       ]
 
+      ^++^ subKeys "Music Player Daemon Control (MPC)"
+      [ ("M-<F1>",  addName "Clear playlist"   $ spawn "mpc clear")
+      , ("M-<F2>",  addName "Decrease volume"  $ spawn "mpc volume -2")
+      , ("M-<F3>",  addName "Increase volume"  $ spawn "mpc volume +2")
+      --("M-<F4>"   addName "" $ )
+      , ("M-<F5>",  addName "Previous song"    $ spawn "mpc prev")
+      , ("M-<F6>",  addName "Toggle playback"  $ spawn "mpc toggle")
+      , ("M-<F7>",  addName "Next song"        $ spawn "mpc next")
+      , ("M-<F8>",  addName "Toggle single"    $ spawn "mpc single")
+      , ("M-<F9>",  addName "Shuffle playlist" $ spawn "mpc shuffle")
+      , ("M-<F10>", addName "Toggle repeat"    $ spawn "mpc repeat")
+      , ("M-<F11>", addName "Seek backward"    $ spawn "mpc seek -5")
+      , ("M-<F12>", addName "Seek forward"     $ spawn "mpc seek +5")
+      ]
+
 -- NOTE: you may also bind events to the mouse scroll wheel (button4 and button5)
 myMouseBindings (XConfig { XMonad.modMask = myModMask}) = M.fromList
     -- Button1: Set the window to floating mode and move by dragging
