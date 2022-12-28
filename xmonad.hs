@@ -83,7 +83,13 @@ myLayoutHook = avoidStruts
 myManageHook = composeAll
   -- NOTE: if having issues with floating windows, check:
   --       https://www.reddit.com/r/xmonad/comments/pv2e6e/comment/he78xqa
-  [ className =? "Yad" --> doCenterFloat
+  [ className =? "confirm"         --> doFloat
+  , className =? "file_progress"   --> doFloat
+  , className =? "dialog"          --> doFloat
+  , className =? "download"        --> doFloat
+  , className =? "error"           --> doFloat
+  , className =? "notification"    --> doFloat
+  , className =? "Yad"             --> doCenterFloat
   , manageDocks
   , insertPosition End Newer
   ]
