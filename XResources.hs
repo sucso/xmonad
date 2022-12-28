@@ -25,36 +25,35 @@ import Data.Maybe (fromMaybe)
 import System.Environment (lookupEnv)
 import System.IO.Unsafe (unsafePerformIO)
 
-xresColors :: IO (Map String String)
-xresColors = do
+colors :: IO (Map String String)
+colors = do
   {-
     NOTE: this expects "#define" directives to NOT have any excess whitespace:
           (eg.: "  #define base00" and "#define   base00" won't be parsed)
     NOTE: using Data.Text would be more efficient,
           but I do not expect to be parsing a lot of data.
   -}
-  xresPath <- lookupEnv "XRESOURCES_THEME"
-  xresContents <- case xresPath of
+  path <- lookupEnv "XRESOURCES_THEME"
+  contents <- case path of
         Just path -> readFile path
         Nothing -> return ""
 
-  let xresLines = lines xresContents
-  let xresDefines = filter (isPrefixOf "#define base") xresLines
-  let xresBases = map (drop $ length "#define ") xresDefines
+  let defines = filter (isPrefixOf "#define base") (lines contents)
+  let bases = map (drop $ length "#define ") defines
 
-  let xresPairs :: [(String, String)]
-      xresPairs = map (split ' ') xresBases
+  let pairs :: [(String, String)]
+      pairs = map (split ' ') bases
         where
           split :: Char -> String -> (String, String)
           split char string = (lhs, rhs)
             where
               (lhs, _:rhs) = span (/= char) string
 
-  return $ fromList xresPairs
+  return $ fromList pairs
 
 myColors :: String -> Maybe String
 -- HACK: using unsafePerformIO (don't know how to do otherwise)
-myColors color = unsafePerformIO xresColors !? color
+myColors color = unsafePerformIO colors !? color
 
 base00 = fromMaybe "#000000" $ myColors "base00"
 base01 = fromMaybe "#111111" $ myColors "base01"
