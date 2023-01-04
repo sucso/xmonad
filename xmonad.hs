@@ -265,7 +265,6 @@ main = do
         <> Hacks.windowedFullscreenFixEventHook
         <> swallowEventHook (foldl1 (<||>) $ map (className =?) mySwallowClasses) (return True)
       , layoutHook = myLayoutHook
-      , logHook = dynamicLogWithPP myPrettyPrinter
       , manageHook = myManageHook
       , mouseBindings = myMouseBindings
       , workspaces = myWorkspaces
