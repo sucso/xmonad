@@ -80,9 +80,15 @@ myLayoutHook = avoidStruts
   $ smartBorders
   myLayouts
 
+{- *******************************
+               WINDOWS
+   ******************************* -}
+
+-- NOTE: ManageHooks compose from right to left, like function composition:
+--         executed_last <> executed_next <> ... <> executed_first;
+-- NOTE: composeAll executes all matching rules (from the top of the list to the bottom);
+--       composeOne runs only the first match.
 myManageHook = composeAll
-  -- NOTE: if having issues with floating windows, check:
-  --       https://www.reddit.com/r/xmonad/comments/pv2e6e/comment/he78xqa
   [ isDialog                       --> doFloat
   , className =? "confirm"         --> doFloat
   , className =? "file_progress"   --> doFloat
