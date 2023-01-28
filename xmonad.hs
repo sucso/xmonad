@@ -10,7 +10,7 @@ import qualified XMonad.Actions.FlexibleResize as Flex
 import XMonad.Hooks.EwmhDesktops (ewmh)
 import XMonad.Hooks.InsertPosition
 import XMonad.Hooks.ManageDocks (avoidStruts, docks, manageDocks, ToggleStruts(..))
-import XMonad.Hooks.ManageHelpers (doCenterFloat)
+import XMonad.Hooks.ManageHelpers (doCenterFloat, isDialog)
 import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
 import XMonad.Hooks.WindowSwallowing (swallowEventHook)
@@ -83,13 +83,16 @@ myLayoutHook = avoidStruts
 myManageHook = composeAll
   -- NOTE: if having issues with floating windows, check:
   --       https://www.reddit.com/r/xmonad/comments/pv2e6e/comment/he78xqa
-  [ className =? "confirm"         --> doFloat
+  [ isDialog                       --> doFloat
+  , className =? "confirm"         --> doFloat
   , className =? "file_progress"   --> doFloat
   , className =? "dialog"          --> doFloat
   , className =? "download"        --> doFloat
   , className =? "error"           --> doFloat
   , className =? "notification"    --> doFloat
+  , className =? "splash"          --> doFloat
   , className =? "Yad"             --> doCenterFloat
+  , (className =? "firefox" <&&> resource =? "Dialog") --> doFloat
   , manageDocks
   , fmap not willFloat --> insertPosition End Newer
   ]
