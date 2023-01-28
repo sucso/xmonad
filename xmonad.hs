@@ -91,7 +91,7 @@ myManageHook = composeAll
   , className =? "notification"    --> doFloat
   , className =? "Yad"             --> doCenterFloat
   , manageDocks
-  , insertPosition End Newer
+  , fmap not willFloat --> insertPosition End Newer
   ]
 
 mySwallowClasses = [ "st-256color"
