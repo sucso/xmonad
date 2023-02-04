@@ -38,7 +38,7 @@ import qualified Data.Map as M
 
 import System.Environment (lookupEnv)
 import System.Exit (exitSuccess)
-import System.IO (hClose, hPutStr, hPutStrLn)
+import System.IO (hClose, hPutStr)
 
 import XResources
 
@@ -163,7 +163,7 @@ myKeyBindings c =
       ([("M-" ++ show number,   addName ("Switch to workspace n°" ++ show number) $ windows $ W.greedyView $ myWorkspaces !! pred number) | number <- [1..9]]
       ++ [("M-p", addName "Toggle previous workspace" toggleWS)])
 
-      ^++^ subKeys "Send window to workspace"
+      ^++^ subKeys "Send windows to workspace"
       [("M-S-" ++ show number, addName ("Send window to workspace n°" ++ show number) $ windows $ W.shift $ myWorkspaces !! pred number) | number <- [1..9]]
 
       ^++^ subKeys "Layouts"
