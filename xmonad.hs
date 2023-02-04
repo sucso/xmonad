@@ -132,8 +132,8 @@ showKeyBindings keymap = addName "Show keybindings" $ do
       height = rect_height rect `div` 2
   handle <- spawnPipe $ "yad \
                         \ --text-info \
-                        \ --fore=" ++ base00 ++ " \
-                        \ --back=" ++ base05 ++ " \
+                        \ --fore=" ++ base05 ++ " \
+                        \ --back=" ++ base00 ++ " \
                         \ --center \
                         \ --geometry=" ++ show width ++ "x" ++ show height ++ " \
                         \ --title 'XMonad keybindings'"
