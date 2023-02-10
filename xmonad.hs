@@ -43,6 +43,22 @@ import System.IO (hClose, hPutStr)
 import XResources
 
 {- *******************************
+        ENVIRONMENT VARIABLES
+   ******************************* -}
+
+-- Applications
+myBrowser   = fromMaybe "librewolf"       <$> lookupEnv "BROWSER"
+myTerminal  = fromMaybe (terminal def)    <$> lookupEnv "TERMINAL"
+myLauncher  = fromMaybe "rofi -show drun" <$> lookupEnv "LAUNCHER"
+myBookmarks = fromMaybe ""                <$> lookupEnv "LAUNCHER_BOOKMARKS"
+
+-- Fonts
+fontEmoji = fromMaybe "Noto Color Emoji" <$> lookupEnv "FONT_EMOJI"
+fontMono  = fromMaybe "DejaVu Sans Mono" <$> lookupEnv "FONT_MONO"
+fontSans  = fromMaybe "DejaVu Sans"      <$> lookupEnv "FONT_SANS"
+fontSerif = fromMaybe "DejaVu Serif"     <$> lookupEnv "FONT_SERIF"
+
+{- *******************************
                LAYOUTS
    ******************************* -}
 
@@ -113,10 +129,6 @@ mySwallowClasses = [ "st-256color"
 
 myModMask = mod4Mask
 
--- Applications
-myBrowser  = fromMaybe "librewolf"       <$> lookupEnv "BROWSER"
-myLauncher = fromMaybe "rofi -show drun" <$> lookupEnv "LAUNCHER"
-myTerminal = fromMaybe (terminal def)    <$> lookupEnv "TERMINAL"
 myToggleXMobar = "dbus-send \
                  \ --session \
                  \ --dest=org.Xmobar.Control \
@@ -130,12 +142,16 @@ showKeyBindings keymap = addName "Show keybindings" $ do
   rect <- gets (screenRect . W.screenDetail . W.current . windowset)
   let width  = rect_width  rect `div` 2
       height = rect_height rect `div` 2
+  font <- io fontMono
   handle <- spawnPipe $ "yad \
                         \ --text-info \
+                        \ --fontname=" ++ font ++ " 18\
                         \ --fore=" ++ base05 ++ " \
                         \ --back=" ++ base00 ++ " \
                         \ --center \
                         \ --geometry=" ++ show width ++ "x" ++ show height ++ " \
+                        \ --no-buttons \
+                        \ --undecorated \
                         \ --title 'XMonad keybindings'"
   io $ hPutStr handle (unlines $ showKm keymap)
   io $ hClose handle
