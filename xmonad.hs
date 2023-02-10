@@ -105,10 +105,10 @@ myLayoutHook = avoidStruts
 -- NOTE: composeAll executes all matching rules (from the top of the list to the bottom);
 --       composeOne runs only the first match.
 myManageHook = composeAll
-  [ isDialog                       --> doFloat
+  [ isDialog                       --> doCenterFloat
   , className =? "confirm"         --> doFloat
   , className =? "file_progress"   --> doFloat
-  , className =? "dialog"          --> doFloat
+  , className =? "dialog"          --> doCenterFloat
   , className =? "download"        --> doFloat
   , className =? "error"           --> doFloat
   , className =? "notification"    --> doFloat
