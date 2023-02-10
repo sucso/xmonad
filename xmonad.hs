@@ -170,7 +170,7 @@ myKeyBindings c =
       ^++^ subKeys "Launch applications"
       [ ("M-d",        addName "Spawn application launcher" $ spawn =<< io myLauncher)
       , ("M-e",        addName "Spawn Emacs client"         $ spawn "emacsclient -c -a \"\"")
-      , ("M-f",        addName "Spawn web browser"          $ spawn =<< io myBrowser)
+      , ("M-f",        addName "Spawn bookmarks launcher"   $ spawn =<< io myBookmarks)
       , ("M-<Return>", addName "Spawn terminal"             $ spawn =<< io myTerminal)
       , ("<Print>",    addName "Spawn screenshot utility"   $ unGrab *> spawn "flameshot gui")
       ]
