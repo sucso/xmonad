@@ -257,7 +257,7 @@ myPrettyPrinter = def
   , ppHiddenNoWindows = xmobarColor base0A ""
 
     -- Title of active window
-  , ppTitle = xmobarColor base0D "" . shorten 60
+  , ppTitle = xmobarColor base0D "" . xmobarStrip . shorten 60
 
     -- Separator character
   , ppSep =  "<fc=" ++ base0F ++ "> | </fc>"
@@ -273,6 +273,8 @@ myPrettyPrinter = def
     -- order of things in xmobar
   , ppOrder  = \(workspaces:layout:titles:extras) -> [workspaces,layout]++extras++[titles]
   }
+
+-- TODO: XMonad.Actions.Navigation2D ( https://www.cs.dal.ca/~nzeh/xmonad/Navigation2D.pdf )
 
 main :: IO ()
 main = do
