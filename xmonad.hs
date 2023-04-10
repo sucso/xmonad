@@ -11,13 +11,17 @@ import XMonad.Hooks.EwmhDesktops (ewmh)
 import XMonad.Hooks.InsertPosition
 import XMonad.Hooks.ManageDocks (avoidStruts, docks, manageDocks, ToggleStruts(..))
 import XMonad.Hooks.ManageHelpers (doCenterFloat, isDialog)
+import XMonad.Hooks.ServerMode
 import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
 import XMonad.Hooks.WindowSwallowing (swallowEventHook)
 
+import XMonad.Layout.BorderResize
 import XMonad.Layout.CenteredIfSingle
 import XMonad.Layout.Dwindle
+import XMonad.Layout.ImageButtonDecoration
 import XMonad.Layout.NoBorders (smartBorders)
+import XMonad.Layout.PositionStoreFloat
 import XMonad.Layout.Reflect
 import XMonad.Layout.Renamed
 import XMonad.Layout.ResizableTile
@@ -84,9 +88,14 @@ myLayouts = tall ||| full ||| dwindle
         ratio = 1.00 -- 6/7
         delta = 1.10
 
+myFloatingLayout = renamed [Replace "Float"]
+  $ imageButtonDeco shrinkText defaultThemeWithImageButtons
+  $ borderResize
+  $ positionStoreFloat
 
 myLayoutHook = avoidStruts
   . smartBorders
+  . toggleLayouts myFloatingLayout
   . MT.mkToggle (MT.single REFLECTX)
   . MT.mkToggle (MT.single REFLECTY)
   $ myLayouts
@@ -140,7 +149,7 @@ showKeyBindings keymap = addName "Show keybindings" $ do
   font <- io fontMono
   handle <- spawnPipe $ "yad \
                         \ --text-info \
-                        \ --fontname=" ++ font ++ " 18\
+                        \ --fontname=" ++ font ++ " 18 \
                         \ --fore=" ++ base05 ++ " \
                         \ --back=" ++ base00 ++ " \
                         \ --center \
@@ -264,7 +273,7 @@ myPrettyPrinter = def
     -- Separator character
   , ppSep =  "<fc=" ++ base0F ++ "> | </fc>"
 
-  , ppLayout = xmobarColor base0B ""
+  , ppLayout = xmobarColor base0B "" . xmobarAction "xmonadctl toggle-layouts" "1"
 
     -- Urgent workspace
   , ppUrgent = xmobarColor base0C "" . wrap "[" "]"
@@ -276,7 +285,9 @@ myPrettyPrinter = def
   , ppOrder  = \(workspaces:layout:titles:extras) -> [workspaces,layout]++extras++[titles]
   }
 
--- TODO: XMonad.Actions.Navigation2D ( https://www.cs.dal.ca/~nzeh/xmonad/Navigation2D.pdf )
+myCommands :: X [(String, X ())]
+myCommands = do
+  return [ ("toggle-layouts", sendMessage ToggleLayout) ]
 
 main :: IO ()
 main = do
@@ -291,6 +302,7 @@ main = do
       { modMask = myModMask
       , terminal = terminal
       , handleEventHook = handleEventHook def
+        <> serverModeEventHookCmd' myCommands
         <> Hacks.windowedFullscreenFixEventHook
         <> swallowEventHook (foldl1 (<||>) $ map (className =?) mySwallowClasses) (return True)
       , layoutHook = myLayoutHook
