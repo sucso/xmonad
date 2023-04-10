@@ -2,9 +2,9 @@ import XMonad hiding (defaultConfig)
 import XMonad.Core (screenRect, windowset)
 
 import XMonad.Actions.CopyWindow (kill1)
-import XMonad.Actions.Promote
-import XMonad.Actions.WithAll (killAll)
 import XMonad.Actions.CycleWS (toggleWS)
+import XMonad.Actions.Promote
+import XMonad.Actions.WithAll (killAll, sinkAll)
 import qualified XMonad.Actions.FlexibleResize as Flex
 
 import XMonad.Hooks.EwmhDesktops (ewmh)
@@ -199,6 +199,8 @@ myKeyBindings c =
       , ("M-S-k",     addName "Swap window up"                        $ windows W.swapUp)
       , ("M-S-m",     addName "Swap window with master"               $ windows W.swapMaster)
       , ("M-<Space>", addName "Promote window to master"              $ promote)
+      , ("M-s",         addName "Sink focused window"                   $ withFocused $ windows . W.sink)
+      , ("M-S-s",       addName "Sink all windows"                      $ sinkAll)
       ]
 
       ^++^ subKeys "Music Player Daemon Control (MPC)"
