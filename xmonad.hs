@@ -15,10 +15,11 @@ import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
 import XMonad.Hooks.WindowSwallowing (swallowEventHook)
 
+import XMonad.Layout.CenteredIfSingle
+import XMonad.Layout.Dwindle
 import XMonad.Layout.NoBorders (smartBorders)
 import XMonad.Layout.Renamed
-import XMonad.Layout.Spiral
-import XMonad.Layout.ThreeColumns
+import XMonad.Layout.ResizableTile
 import XMonad.Layout.ToggleLayouts
 import qualified XMonad.Layout.Magnifier as Mag
 
@@ -62,39 +63,29 @@ fontSerif = fromMaybe "DejaVu Serif"     <$> lookupEnv "FONT_SERIF"
                LAYOUTS
    ******************************* -}
 
-myLayouts = tiled ||| threeCol ||| monocle ||| spirals
+myLayouts = tall ||| full ||| dwindle
   where
-    tiled = renamed [Replace "Tile"]
-      $ Tall nmaster delta ratio
+    tall = renamed [Replace "Tall"]
+      $ centeredIfSingle (3/4) 1
+      $ ResizableTall nmaster delta ratio []
       where
         nmaster = 1
         delta   = 3/100
         ratio   = 1/2
-    threeCol = renamed [Replace "Three Columns"]
-      $ ThreeColMid nmaster delta ratio
+    full = renamed [Replace "Full"] Full
+    dwindle = renamed [Replace "Dwindle"]
+      $ centeredIfSingle (3/4) 1
+      $ Dwindle firstSplitDirection chirality ratio delta
       where
-        nmaster = 1         -- Default number of windows in the master pane
-        delta   = 3/100     -- Percent of screen to increment by when resizing panes
-        ratio   = 1/2       -- Default proportion of screen occupied by master pane
-    monocle = renamed [Replace "Monocle"]
-      $ Full
-    spirals = renamed [Replace "Spirals"]
-      $ spiral ratio
-      where
-        ratio = 6/7
+        firstSplitDirection = R
+        chirality = CW
+        ratio = 1.00 -- 6/7
+        delta = 1.10
 
-    -- TODO: look into "Dwindle" layout
-    --       ( https://hackage.haskell.org/package/xmonad-contrib-0.17.1/docs/XMonad-Layout-Dwindle.html )
-
-    -- TODO: look into "Grid Variants" layout
-    --       ( https://hackage.haskell.org/package/xmonad-contrib-0.17.1/docs/XMonad-Layout-GridVariants.html )
-
-    -- TODO: use CenteredIfSingle
-    --       ( https://xmonad.github.io/xmonad-docs/xmonad-contrib/XMonad-Layout-CenteredIfSingle.html )
 
 myLayoutHook = avoidStruts
-  $ smartBorders
-  myLayouts
+  . smartBorders
+  $ myLayouts
 
 {- *******************************
                WINDOWS
@@ -183,22 +174,25 @@ myKeyBindings c =
       [("M-S-" ++ show number, addName ("Send window to workspace n°" ++ show number) $ windows $ W.shift $ myWorkspaces !! pred number) | number <- [1..9]]
 
       ^++^ subKeys "Layouts"
-      [ ("M-t", addName "Tile"          $ sendMessage $ JumpToLayout "Tile")
-      , ("M-r", addName "Three Columns" $ sendMessage $ JumpToLayout "Three Columns")
-      , ("M-o", addName "Monocle"       $ sendMessage $ JumpToLayout "Monocle")
-      , ("M-s", addName "Spirals"       $ sendMessage $ JumpToLayout "Spirals")
+      [ ("M-t", addName "Tall"          $ sendMessage $ JumpToLayout "Tall")
+      , ("M-o", addName "Full"          $ sendMessage $ JumpToLayout "Full")
+      , ("M-r", addName "Dwindle"       $ sendMessage $ JumpToLayout "Dwindle")
       ]
 
       ^++^ subKeys "Control current layout and windows"
-      [ ("M-[",       addName "Increase the number of master windows" $ sendMessage $ IncMasterN 1)
-      , ("M-]",       addName "Decrease the number of master windows" $ sendMessage $ IncMasterN (-1))
-      , ("M-j",       addName "Move focus down"                       $ windows W.focusDown)
-      , ("M-k",       addName "Move focus up"                         $ windows W.focusUp)
-      , ("M-m",       addName "Move focus to master"                  $ windows W.focusMaster)
-      , ("M-S-j",     addName "Swap window down"                      $ windows W.swapDown)
-      , ("M-S-k",     addName "Swap window up"                        $ windows W.swapUp)
-      , ("M-S-m",     addName "Swap window with master"               $ windows W.swapMaster)
-      , ("M-<Space>", addName "Promote window to master"              $ promote)
+      [ ("M-[",         addName "Increase the number of master windows" $ sendMessage $ IncMasterN 1)
+      , ("M-]",         addName "Decrease the number of master windows" $ sendMessage $ IncMasterN (-1))
+      , ("M-j",         addName "Move focus down"                       $ windows W.focusDown)
+      , ("M-k",         addName "Move focus up"                         $ windows W.focusUp)
+      , ("M-m",         addName "Move focus to master"                  $ windows W.focusMaster)
+      , ("M-S-j",       addName "Swap window down"                      $ windows W.swapDown)
+      , ("M-S-k",       addName "Swap window up"                        $ windows W.swapUp)
+      , ("M-<Space>",   addName "Swap window with master"               $ windows W.swapMaster)
+      -- , ("M-<Space>", addName "Promote window to master"              $ promote)
+      , ("M-M1-h",      addName "Shrink horizontally"                   $ sendMessage Shrink)
+      , ("M-M1-j",      addName "Shrink vertically"                     $ sendMessage MirrorShrink)
+      , ("M-M1-k",      addName "Expand vertically"                     $ sendMessage MirrorExpand)
+      , ("M-M1-l",      addName "Expand horizontally"                   $ sendMessage Expand)
       , ("M-s",         addName "Sink focused window"                   $ withFocused $ windows . W.sink)
       , ("M-S-s",       addName "Sink all windows"                      $ sinkAll)
       ]
