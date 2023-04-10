@@ -18,10 +18,12 @@ import XMonad.Hooks.WindowSwallowing (swallowEventHook)
 import XMonad.Layout.CenteredIfSingle
 import XMonad.Layout.Dwindle
 import XMonad.Layout.NoBorders (smartBorders)
+import XMonad.Layout.Reflect
 import XMonad.Layout.Renamed
 import XMonad.Layout.ResizableTile
 import XMonad.Layout.ToggleLayouts
 import qualified XMonad.Layout.Magnifier as Mag
+import qualified XMonad.Layout.MultiToggle as MT
 
 import qualified XMonad.StackSet as W
 
@@ -85,6 +87,8 @@ myLayouts = tall ||| full ||| dwindle
 
 myLayoutHook = avoidStruts
   . smartBorders
+  . MT.mkToggle (MT.single REFLECTX)
+  . MT.mkToggle (MT.single REFLECTY)
   $ myLayouts
 
 {- *******************************
@@ -195,6 +199,8 @@ myKeyBindings c =
       , ("M-M1-l",      addName "Expand horizontally"                   $ sendMessage Expand)
       , ("M-s",         addName "Sink focused window"                   $ withFocused $ windows . W.sink)
       , ("M-S-s",       addName "Sink all windows"                      $ sinkAll)
+      , ("M-x",         addName "Reflect layout horizontally"           $ sendMessage $ MT.Toggle REFLECTX)
+      , ("M-z",         addName "Reflect layout vertically"             $ sendMessage $ MT.Toggle REFLECTY)
       ]
 
       ^++^ subKeys "Music Player Daemon Control (MPC)"
