@@ -18,6 +18,7 @@ import XMonad.Hooks.WindowSwallowing (swallowEventHook)
 
 import XMonad.Layout.BorderResize
 import XMonad.Layout.CenteredIfSingle
+import XMonad.Layout.Decoration
 import XMonad.Layout.Dwindle
 import XMonad.Layout.ImageButtonDecoration
 import XMonad.Layout.NoBorders (smartBorders)
@@ -69,6 +70,22 @@ fontSerif = fromMaybe "DejaVu Serif"     <$> lookupEnv "FONT_SERIF"
                LAYOUTS
    ******************************* -}
 
+myTheme :: Theme
+myTheme = def { activeColor         = base00
+              , inactiveColor       = base01
+              , urgentColor         = base0C
+              , activeBorderColor   = base09
+              , inactiveBorderColor = base02
+              , urgentBorderColor   = base0A
+              , activeTextColor     = base08
+              , inactiveTextColor   = base04
+              , urgentTextColor     = base01
+              , fontName            = "xft:monospace"
+              , windowTitleIcons    = windowTitleIcons defaultThemeWithImageButtons
+              , decoWidth           = 200
+              , decoHeight          = 18
+              }
+
 myLayouts = tall ||| full ||| dwindle
   where
     tall = renamed [Replace "Tall"]
@@ -89,7 +106,7 @@ myLayouts = tall ||| full ||| dwindle
         delta = 1.10
 
 myFloatingLayout = renamed [Replace "Float"]
-  $ imageButtonDeco shrinkText defaultThemeWithImageButtons
+  $ imageButtonDeco shrinkText myTheme
   $ borderResize
   $ positionStoreFloat
 
@@ -254,11 +271,11 @@ myPrettyPrinter :: PP
 myPrettyPrinter = def
   { ppRename = \w _ -> xmobarRaw w
 
-  , ppCurrent = xmobarColor base0E "" . wrap
-                ("<box type=Bottom width=2 mb=2 color=" ++ base0E ++ ">") "</box>"
+  , ppCurrent = xmobarColor (activeTextColor myTheme) "" . wrap
+                ("<box type=Bottom width=2 mb=2 color=" ++ activeTextColor myTheme ++ ">") "</box>"
 
     -- Visible but not current workspace
-  , ppVisible = xmobarColor base0E ""
+  , ppVisible = xmobarColor (activeTextColor myTheme) ""
 
     -- Hidden workspace
   , ppHidden = xmobarColor base0A "" . wrap
@@ -271,7 +288,7 @@ myPrettyPrinter = def
   , ppTitle = xmobarColor base0D "" . xmobarStrip . shorten 90
 
     -- Separator character
-  , ppSep =  "<fc=" ++ base0F ++ "> | </fc>"
+  , ppSep =  "<fc=" ++ base0E ++ "> | </fc>"
 
   , ppLayout = xmobarColor base0B "" . xmobarAction "xmonadctl toggle-layouts" "1"
 
@@ -309,7 +326,7 @@ main = do
       , manageHook = myManageHook
       , mouseBindings = myMouseBindings
       , workspaces = myWorkspaces
-      , normalBorderColor = base02
-      , focusedBorderColor = base09
+      , normalBorderColor = inactiveBorderColor myTheme
+      , focusedBorderColor = activeBorderColor myTheme
       , borderWidth = 3
       }
