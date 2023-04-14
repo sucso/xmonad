@@ -11,6 +11,7 @@ import XMonad.Hooks.EwmhDesktops (ewmh)
 import XMonad.Hooks.InsertPosition
 import XMonad.Hooks.ManageDocks (avoidStruts, docks, manageDocks, ToggleStruts(..))
 import XMonad.Hooks.ManageHelpers (doCenterFloat, isDialog)
+import XMonad.Hooks.PositionStoreHooks
 import XMonad.Hooks.ServerMode
 import XMonad.Hooks.StatusBar
 import XMonad.Hooks.StatusBar.PP
@@ -138,6 +139,7 @@ myManageHook = composeAll
   , (className =? "firefox" <&&> resource =? "Dialog") --> doFloat
   , manageDocks
   , fmap not willFloat --> insertPosition End Newer
+  , positionStoreManageHook (Just myTheme)
   ]
 
 mySwallowClasses = [ "st-256color"
@@ -319,6 +321,7 @@ main = do
       { modMask = myModMask
       , terminal = terminal
       , handleEventHook = handleEventHook def
+        <> positionStoreEventHook
         <> serverModeEventHookCmd' myCommands
         <> Hacks.windowedFullscreenFixEventHook
         <> swallowEventHook (foldl1 (<||>) $ map (className =?) mySwallowClasses) (return True)
