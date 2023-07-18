@@ -15,6 +15,17 @@ module XResources
   , base0D
   , base0E
   , base0F
+  , black
+  , gray
+  , white
+  , brightWhite
+  , red
+  , orange
+  , yellow
+  , green
+  , cyan
+  , blue
+  , magenta
   ) where
 
 import Data.List (isPrefixOf, dropWhileEnd)
@@ -71,3 +82,15 @@ base0C = fromMaybe "#CCCCCC" $ myColors "base0C"
 base0D = fromMaybe "#DDDDDD" $ myColors "base0D"
 base0E = fromMaybe "#EEEEEE" $ myColors "base0E"
 base0F = fromMaybe "#FFFFFF" $ myColors "base0F"
+
+black        = base00
+gray         = base03
+white        = base05
+brightWhite  = base07
+red          = base08
+orange       = base09
+yellow       = base0A
+green        = base0B
+cyan         = base0C
+blue         = base0D
+magenta      = base0E

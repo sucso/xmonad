@@ -7,14 +7,13 @@ import XMonad.Actions.Promote
 import XMonad.Actions.WithAll (killAll, sinkAll)
 import qualified XMonad.Actions.FlexibleResize as Flex
 
+import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.EwmhDesktops (ewmh)
 import XMonad.Hooks.InsertPosition
 import XMonad.Hooks.ManageDocks (avoidStruts, docks, manageDocks, ToggleStruts(..))
 import XMonad.Hooks.ManageHelpers (doCenterFloat, isDialog)
 import XMonad.Hooks.PositionStoreHooks
 import XMonad.Hooks.ServerMode
-import XMonad.Hooks.StatusBar
-import XMonad.Hooks.StatusBar.PP
 import XMonad.Hooks.WindowSwallowing (swallowEventHook)
 
 import XMonad.Layout.BorderResize
@@ -40,7 +39,9 @@ import XMonad.Util.Run (spawnPipe)
 import XMonad.Util.Ungrab (unGrab)
 import qualified XMonad.Util.Hacks as Hacks
 
+import Codec.Binary.UTF8.String (encode)
 import Data.Char (toLower, isSpace)
+import Data.Functor ((<&>))
 import Data.List (isPrefixOf, dropWhileEnd)
 import Data.Maybe (fromJust, fromMaybe)
 import qualified Data.Map as M
@@ -72,15 +73,18 @@ fontSerif = fromMaybe "DejaVu Serif"     <$> lookupEnv "FONT_SERIF"
    ******************************* -}
 
 myTheme :: Theme
-myTheme = def { activeColor         = base00
-              , inactiveColor       = base01
-              , urgentColor         = base0C
-              , activeBorderColor   = base09
-              , inactiveBorderColor = base02
-              , urgentBorderColor   = base0A
-              , activeTextColor     = base08
-              , inactiveTextColor   = base04
-              , urgentTextColor     = base01
+myTheme = def { activeColor         = black
+              , activeBorderColor   = orange
+              , activeTextColor     = white
+
+              , inactiveColor       = black
+              , inactiveBorderColor = gray
+              , inactiveTextColor   = gray
+
+              , urgentColor         = red
+              , urgentBorderColor   = yellow
+              , urgentTextColor     = black
+
               , fontName            = "xft:monospace"
               , windowTitleIcons    = windowTitleIcons defaultThemeWithImageButtons
               , decoWidth           = 200
@@ -152,14 +156,6 @@ mySwallowClasses = [ "st-256color"
 
 myModMask = mod4Mask
 
-myToggleXMobar = "dbus-send \
-                 \ --session \
-                 \ --dest=org.Xmobar.Control \
-                 \ --type=method_call \
-                 \ --print-reply '/org/Xmobar/Control' \
-                 \ org.Xmobar.Control.SendSignal 'string:Toggle 0'"
-
-
 showKeyBindings :: [((KeyMask, KeySym), NamedAction)] -> NamedAction
 showKeyBindings keymap = addName "Show keybindings" $ do
   rect <- gets (screenRect . W.screenDetail . W.current . windowset)
@@ -184,7 +180,7 @@ myKeyBindings :: XConfig l0 -> [((KeyMask, KeySym), NamedAction)]
 myKeyBindings c =
   let subKeys str ks = subtitle str : mkNamedKeymap c ks in
       subKeys "XMonad Core"
-      [ ("M-b",   addName "Toggle hide/show bar"                  $ spawn myToggleXMobar) -- sendMessage ToggleStruts
+      [ ("M-b",   addName "Toggle hide/show bar"                  $ toggleStruts)
       , ("M-S-q", addName "Quit XMonad"                           $ io exitSuccess)
       , ("M-S-c", addName "Kill focused window"                   $ kill1)
       , ("M-S-a", addName "Kill all windows in current workspace" $ killAll)
@@ -245,6 +241,9 @@ myKeyBindings c =
       , ("M-<F11>", addName "Seek backward"    $ spawn "mpc seek -5")
       , ("M-<F12>", addName "Seek forward"     $ spawn "mpc seek +5")
       ]
+      where
+        togglePolybar = spawn "polybar-msg cmd toggle &"
+        toggleStruts = togglePolybar >> sendMessage ToggleStruts
 
 -- NOTE: you may also bind events to the mouse scroll wheel (button4 and button5)
 myMouseBindings (XConfig { XMonad.modMask = myModMask}) = M.fromList
@@ -255,55 +254,41 @@ myMouseBindings (XConfig { XMonad.modMask = myModMask}) = M.fromList
     , ((myModMask, button2), \w -> focus w >> withFocused (windows . W.sink) >> windows W.shiftMaster)
     , ((myModMask, button3), \w -> focus w >> Flex.mouseResizeWindow w >> windows W.shiftMaster)
     ]
+{- *******************************
+             STATUS BAR
+   ******************************* -}
+
+-- from XMonad.Hooks.TaffybarPagerHints "setCurrentLayoutProp" function
+setXProp :: String -> String -> X ()
+setXProp prop val = withDisplay $ \dpy -> do
+  root <- asks theRoot
+  atom <- getAtom prop
+  codec <- getAtom "UTF8_STRING"
+  let val' = map fromIntegral (encode val)
+  io $ changeProperty8 dpy root atom codec propModeReplace val'
+
+myStatusBarLogHook :: X ()
+myStatusBarLogHook = withWindowSet $ \windowSet -> do
+  let property = "_CURRENT_LAYOUT"
+
+  -- https://stackoverflow.com/a/62075879
+  windowCount <- length . W.index . windowset <$> get
+  -- windowCount <- length . W.integrate' . W.stack . W.workspace . W.current . windowset <$> get
+
+  let layoutName = description . W.layout . W.workspace . W.current $ windowSet
+  setXProp property (layoutName ++ " (" ++ show windowCount ++ ")")
 
 {- *******************************
                 MAIN
    ******************************* -}
 
 myWorkspaces :: [String]
-myWorkspaces = [" 1 ", " 2 ", " 3 ", " 4 ", " 5 ", " 6 ", " 7 ", " 8 ", " 9 "]
+myWorkspaces = [ "1", "2", "3", "4", "5", "6", "7", "8", "9" ]
 
 myWorkspaceIndices :: M.Map String Integer
 myWorkspaceIndices = M.fromList $ zip myWorkspaces [1..]
 
-myStatusBar :: StatusBarConfig
-myStatusBar = statusBarProp "xmobar" $ clickablePP myPrettyPrinter
-
-myPrettyPrinter :: PP
-myPrettyPrinter = def
-  { ppRename = \w _ -> xmobarRaw w
-
-  , ppCurrent = xmobarColor (activeTextColor myTheme) "" . wrap
-                ("<box type=Bottom width=2 mb=2 color=" ++ activeTextColor myTheme ++ ">") "</box>"
-
-    -- Visible but not current workspace
-  , ppVisible = xmobarColor (activeTextColor myTheme) ""
-
-    -- Hidden workspace
-  , ppHidden = xmobarColor base0A "" . wrap
-               ("<box type=Top width=2 mt=2 color=" ++ base0A ++ ">") "</box>"
-
-    -- Hidden workspaces (no windows)
-  , ppHiddenNoWindows = xmobarColor base0A ""
-
-    -- Title of active window
-  , ppTitle = xmobarColor base0D "" . xmobarStrip . shorten 90
-
-    -- Separator character
-  , ppSep =  "<fc=" ++ base0E ++ "> | </fc>"
-
-  , ppLayout = xmobarColor base0B "" . xmobarAction "xmonadctl toggle-layouts" "1"
-
-    -- Urgent workspace
-  , ppUrgent = xmobarColor base0C "" . wrap "[" "]"
-
-    -- Number of windows in current workspace
-  , ppExtras  = [ gets $ Just . show . length . W.index . windowset ]
-
-    -- order of things in xmobar
-  , ppOrder  = \(workspaces:layout:titles:extras) -> [workspaces,layout]++extras++[titles]
-  }
-
+-- server mode commands
 myCommands :: X [(String, X ())]
 myCommands = do
   return [ ("toggle-layouts", sendMessage ToggleLayout) ]
@@ -314,7 +299,6 @@ main = do
   xmonad
     . ewmh
     . docks
-    . withSB myStatusBar
     . addDescrKeys' ((mod4Mask .|. shiftMask, xK_F1), showKeyBindings) myKeyBindings
     $
     def
@@ -326,6 +310,7 @@ main = do
         <> Hacks.windowedFullscreenFixEventHook
         <> swallowEventHook (foldl1 (<||>) $ map (className =?) mySwallowClasses) (return True)
       , layoutHook = myLayoutHook
+      , logHook = myStatusBarLogHook
       , manageHook = myManageHook
       , mouseBindings = myMouseBindings
       , workspaces = myWorkspaces
