@@ -131,7 +131,9 @@ myLayoutHook = avoidStruts
 -- NOTE: composeAll executes all matching rules (from the top of the list to the bottom);
 --       composeOne runs only the first match.
 myManageHook = composeAll
-  [ isDialog                       --> doCenterFloat
+  [ manageDocks
+  , isDialog                       --> doCenterFloat
+  , (className =? "firefox" <&&> resource =? "Dialog") --> doFloat
   , className =? "confirm"         --> doFloat
   , className =? "file_progress"   --> doFloat
   , className =? "dialog"          --> doCenterFloat
@@ -140,8 +142,6 @@ myManageHook = composeAll
   , className =? "notification"    --> doFloat
   , className =? "splash"          --> doFloat
   , className =? "Yad"             --> doCenterFloat
-  , (className =? "firefox" <&&> resource =? "Dialog") --> doFloat
-  , manageDocks
   , fmap not willFloat --> insertPosition End Newer
   , positionStoreManageHook (Just myTheme)
   ]
