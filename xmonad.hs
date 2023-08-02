@@ -50,7 +50,7 @@ import System.Environment (lookupEnv)
 import System.Exit (exitSuccess)
 import System.IO (hClose, hPutStr)
 
-import XResources
+import Colors
 
 {- *******************************
         ENVIRONMENT VARIABLES
@@ -74,7 +74,7 @@ fontSerif = fromMaybe "DejaVu Serif"     <$> lookupEnv "FONT_SERIF"
 
 myTheme :: Theme
 myTheme = def { activeColor         = black
-              , activeBorderColor   = orange
+              , activeBorderColor   = primary
               , activeTextColor     = white
 
               , inactiveColor       = black
@@ -82,7 +82,7 @@ myTheme = def { activeColor         = black
               , inactiveTextColor   = gray
 
               , urgentColor         = red
-              , urgentBorderColor   = yellow
+              , urgentBorderColor   = red
               , urgentTextColor     = black
 
               , fontName            = "xft:monospace"
