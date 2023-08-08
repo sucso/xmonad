@@ -146,9 +146,11 @@ myManageHook = composeAll
   , positionStoreManageHook (Just myTheme)
   ]
 
-mySwallowClasses = [ "st-256color"
-                   , "xterm"
-                   ]
+mySwallowEventHook = swallowEventHook
+  (foldl1 (<||>) [ appName =? "st-256color"
+                 , appName =? "xterm"
+                 ])
+  (return True)
 
 {- *******************************
               KEYBINDINGS
@@ -308,7 +310,7 @@ main = do
         <> positionStoreEventHook
         <> serverModeEventHookCmd' myCommands
         <> Hacks.windowedFullscreenFixEventHook
-        <> swallowEventHook (foldl1 (<||>) $ map (className =?) mySwallowClasses) (return True)
+        <> mySwallowEventHook
       , layoutHook = myLayoutHook
       , logHook = myStatusBarLogHook
       , manageHook = myManageHook
