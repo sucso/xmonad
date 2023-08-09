@@ -182,7 +182,7 @@ myKeyBindings :: XConfig l0 -> [((KeyMask, KeySym), NamedAction)]
 myKeyBindings c =
   let subKeys str ks = subtitle str : mkNamedKeymap c ks in
       subKeys "XMonad Core"
-      [ ("M-b",   addName "Toggle hide/show bar"                  $ toggleStruts)
+      [ ("M-b",   addName "Toggle hide/show bar"                  $ togglePolybar)
       , ("M-S-q", addName "Quit XMonad"                           $ io exitSuccess)
       , ("M-S-c", addName "Kill focused window"                   $ kill1)
       , ("M-S-a", addName "Kill all windows in current workspace" $ killAll)
@@ -244,8 +244,8 @@ myKeyBindings c =
       , ("M-<F12>", addName "Seek forward"     $ spawn "mpc seek +5")
       ]
       where
-        togglePolybar = spawn "polybar-msg cmd toggle &"
-        toggleStruts = togglePolybar >> sendMessage ToggleStruts
+        togglePolybar = spawn "polybar-msg cmd toggle"
+        toggleStruts =  sendMessage ToggleStruts
 
 -- NOTE: you may also bind events to the mouse scroll wheel (button4 and button5)
 myMouseBindings (XConfig { XMonad.modMask = myModMask}) = M.fromList
